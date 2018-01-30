@@ -29,6 +29,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 </copyright> */
 var Montage = require("montage").Montage,
+    Component = require("montage/ui/component").Component,
     TestPageLoader = require("montage-testing/testpageloader").TestPageLoader,
     Template = require("montage/core/template").Template,
     Application = require("montage/core/application").application;
@@ -307,10 +308,79 @@ TestPageLoader.queueTest("repetition/repetition", function (testPage) {
                 });
             });
 
+        it("can properly define bindings", function () {
+       
+            var MyComponent = Component.specialize({
+                    aProperty: {
+                        value: undefined
+                    }
+                }),
+                MyObject = Montage.specialize({
+                    myProperty: {
+                        get: function () {
+                            if (this._myProperty === undefined) {
+                                this._myProperty = 0;
+                            }
+                            return this._myProperty;
+                        },
+                        set: function (value) {
+                            this._myProperty = value;
+                        }
+                    }
+                }),
+                c = new MyComponent(),
+                c2 = new MyComponent(),
+                c3 = new MyComponent(),
+                o = new MyObject(),
+                o2 = new MyObject(),
+                o3 = new MyObject();
+
+                o.sibling = o2;
+                
+     
+            c.defineBinding("aProperty", {"<-": "sibling.myProperty", source: o});
+            
+     
+            expect(c.aProperty).toBe(0);
+            
+            o2.myProperty++;
+            o3.myProperty = 4;
+            o.sibling = o3;
+     
+            // o2.myProperty++;
+            // o3.myProperty++;
+
+            expect(c.aProperty).toBe(4);
+            
+     
+            for (var i = 0, n = 100; i < n; i++) {
+                o3.myProperty = i;
+                // o2.myProperty = i;
+                // o3.myProperty = i;
+                expect(c.aProperty).toBe(i);
+                // expect(c2.aProperty).toBe(i);
+                // expect(c3.aProperty).toBe(i);
+            }
+     
+        });
+
             it("should replace one iteration on the component repetition", function (done) {
-                delegate.list2Objects = [{text: "This"}, {text: "is"}, {text: "Sparta"}];
+                var Item = Component.specialize({
+                        text: {
+                            value: undefined
+                        }
+                    }, {
+                        withText: {
+                            value: function (text) {
+                                var item = new this();
+                                item.text = text;
+                                return item;
+                            }
+                        }
+                    });
+                delegate.list2Objects = [Item.withText("This"), Item.withText("is"), Item.withText("Sparta")];
                 testPage.waitForComponentDraw(delegate.repetition2).then(function () {
-                    // sonity check
+                    // sanity check
                     expect(querySelectorAll(".list2 > li").length).toBe(3);
                     delegate.list2Objects.set(2, {text: "Motorola"});
                     testPage.waitForDraw().then(function () {

@@ -27,6 +27,10 @@ var TIMEOUT_BEFORE_ITERATION_BECOME_ACTIVE = 60;
  */
 var Iteration = exports.Iteration = Montage.specialize( /** @lends Iteration.prototype # */ {
 
+
+    isIteration: {
+        value: true
+    },
     /**
      * The parent repetition component.
      * @private
@@ -277,7 +281,7 @@ var Iteration = exports.Iteration = Montage.specialize( /** @lends Iteration.pro
             );
 
             this.cachedFirstElement = null;
-
+            // this.addOwnPropertyChangeListener("object", function () {});
         }
     },
 

@@ -1279,6 +1279,7 @@ exports.DataService = Montage.specialize(/** @lends DataService.prototype */ {
                 propertyDescriptor = !useDelegate && !delegateFunction && isHandler && this._propertyDescriptorForObjectAndName(object, propertyName),
                 childService = !isHandler && this._getChildServiceForObject(object);
 
+
             return  useDelegate ?                       this.fetchRawObjectProperty(object, propertyName) :
                     delegateFunction ?                  delegateFunction.call(this, object) :
                     isHandler && propertyDescriptor ?   this._fetchObjectPropertyWithPropertyDescriptor(object, propertyName, propertyDescriptor) :
@@ -1774,7 +1775,7 @@ exports.DataService = Montage.specialize(/** @lends DataService.prototype */ {
             } else {
                 if (this.authorizationPolicy === AuthorizationPolicy.ON_DEMAND) {
                     if (typeof this.shouldAuthorizeForQuery === "function" && this.shouldAuthorizeForQuery(stream.query) && !this.authorization) {
-                        this.authorizationPromise = exports.DataService.authorizationManager.authorizeService(this).then(function(authorization) {
+                        this.authorizationPromise = exports.DataService.authorizationManager.authorizeService(this, true).then(function(authorization) {
                             self.authorization = authorization;
                             return authorization;
                         }).catch(function(error) {

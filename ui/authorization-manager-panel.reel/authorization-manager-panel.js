@@ -82,6 +82,16 @@ exports.AuthorizationManagerPanel = Component.specialize({
             if (this._authorizationResolve) {
                 this._authorizationReject("CANCEL");
             }
+
+            var index = this.authorizationPanels.indexOf(authorizationPanel);
+            if (index !== -1) {
+                this.authorizationPanels.splice(index, 1);
+            }
+            this._panels.get(authorizationPanel).resolve(authorization);
+
+            if (!this.authorizationPanels.length && this._authorizationResolve) {
+                this._authorizationResolve(authorization);
+            }
         }
     },
 

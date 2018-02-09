@@ -198,10 +198,7 @@ exports.RawDataService = DataService.specialize(/** @lends RawDataService.protot
                 childService = this._childServiceForQuery(stream.query),
                 query = stream.query;
 
-            //TODO [TJ] Determine purpose of this check...
-            // if (childService && childService.identifier.indexOf("offline-service") === -1) {
-            //     childService._fetchRawData(stream);
-            // } else
+
             if (childService) {
                 childService._fetchRawData(stream);
             } else if (query.authorization) {
@@ -213,6 +210,16 @@ exports.RawDataService = DataService.specialize(/** @lends RawDataService.protot
                 self.fetchRawData(stream);
                 stream.query = query;
             } else {
+                if (this.authorizationPolicy === DataService.AuthorizationPolicy.ON_DEMAND) {
+                    if (typeof this.shouldAuthorizeForQuery === "function" && this.shouldAuthorizeForQuery(stream.query) && !this.authorization) {
+                        this.authorizationPromise = exports.DataService.authorizationManager.authorizeService(this, true).then(function(authorization) {
+                            self.authorization = authorization;
+                            return authorization;
+                        }).catch(function(error) {
+                            console.log(error);
+                        });
+                    }
+                }
                 DataService.authorizationManager.authorizeService(this).then(function(authorization) {
                     self.authorization = authorization;
                     return authorization;

@@ -40,6 +40,10 @@ var HttpError = exports.HttpError = Montage.specialize({
         value: "HttpError"
     },
 
+    response: {
+        value: undefined
+    },
+
     url: {
         value: undefined
     },
@@ -285,7 +289,7 @@ var HttpService = exports.HttpService = RawDataService.specialize(/** @lends Htt
     _fetchHttpRawDataWithParsedArguments: {
         value: function (parsed) {
             var self = this,
-                error, request;
+                body, error, request;
 
             if (!parsed) {
                 error = new Error("Invalid arguments to fetchHttpRawData()");
@@ -311,6 +315,12 @@ var HttpService = exports.HttpService = RawDataService.specialize(/** @lends Htt
                     };
                     request.onerror = function () {
                         error = HttpError.withRequestAndURL(request, parsed.url);
+                        try {
+                            body = JSON.parse(request.responseText);
+                        } catch (e) {
+                            body = request.responseText;
+                        }
+                        error.response = body;
                         reject(error);
                     };
                     request.open(parsed.body ? "POST" : "GET", parsed.url, true);
@@ -339,7 +349,14 @@ var HttpService = exports.HttpService = RawDataService.specialize(/** @lends Htt
                 } else if (!error && (request.status >= 300 || request.status === 0)) {
                     // error = new Error("Status " + request.status + " received for REST URL " + parsed.url);
                     // console.warn(error);
-                    throw HttpError.withRequestAndURL(request, parsed.url);
+                    error = HttpError.withRequestAndURL(request, parsed.url);
+                    try {
+                        body = JSON.parse(request.responseText);
+                    } catch (e) {
+                        body = request.responseText;
+                    }
+                    error.response = body;
+                    throw error;
                 }
                 // Return null for errors or return the results of parsing the
                 // request response according to the specified types.

@@ -2562,8 +2562,11 @@ var EventManager = exports.EventManager = Montage.specialize(/** @lends EventMan
                 eventPath = this._eventPathForTarget(mutableEventTarget);
             }
 
+            // if (!mutableEventTarget) {
+            //     debugger;
+            // }
             // use most specific handler method available, possibly based upon the identifier of the event target
-            if (mutableEventTarget.identifier) {
+            if (mutableEventTarget && mutableEventTarget.identifier) {
                 capitalizedIdentifier = mutableEventTarget.identifier.toCapitalized();
                 identifierSpecificCaptureMethodName = this.methodNameForCapturePhaseOfEventType(eventType, mutableEventTarget.identifier, capitalizedEventType, capitalizedIdentifier);
                 identifierSpecificBubbleMethodName = this.methodNameForBubblePhaseOfEventType(eventType, mutableEventTarget.identifier, capitalizedEventType, capitalizedIdentifier);

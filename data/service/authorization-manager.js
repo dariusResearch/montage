@@ -74,23 +74,23 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _panelForProvider: {
-        value: function (provider) {
+        value: function (provider, dataService) {
             var moduleId = this._panelModuleIDForProvider(provider),
                 panel = this._panelsByProvider.get(provider);
 
-            return panel ? Promise.resolve(panel) : this._makePanelForProvider(moduleId, provider);
+            return panel ? Promise.resolve(panel) : this._makePanelForProvider(moduleId, provider, dataService);
         }
     },
 
     _panelModuleIDForProvider: {
-        value: function (provider) {
+        value: function (provider, dataService) {
             var moduleID = provider.authorizationPanel;
-            return this.callDelegateMethod("authorizationManagerWillAuthorizeServiceWithPanelModuleId", this,  provider, moduleID) || moduleID;
+            return this.callDelegateMethod("authorizationManagerWillAuthorizeServiceWithPanelModuleId", this,  provider, moduleID, dataService) || moduleID;
         }
     },
 
     _makePanelForProvider: {
-        value: function (panelModuleID, provider) {
+        value: function (panelModuleID, provider, dataService) {
             var self = this,
                 providerInfo = Montage.getInfoForObject(provider),
                 panelPromise;
@@ -101,7 +101,7 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
                         panel, i, n;
 
                     for (i = 0, n = exportNames.length; i < n && !panel; ++i) {
-                        panel = self._panelForConstructorAndProvider(exports[exportNames[i]], provider);
+                        panel = self._panelForConstructorAndProvider(exports[exportNames[i]], provider, dataService);
                     }
                     panel.service = provider;
                     self._panelsByProvider.set(provider, panel);
@@ -114,8 +114,8 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _panelForConstructorAndProvider: {
-        value: function (constructor, provider) {
-            return this.callDelegateMethod("authorizationManagerWillInstantiateAuthorizationPanelForService", this, constructor, provider) || new constructor();
+        value: function (constructor, provider, dataService) {
+            return this.callDelegateMethod("authorizationManagerWillInstantiateAuthorizationPanelForService", this, constructor, provider, dataService) || new constructor();
         }
     },
 
@@ -137,7 +137,7 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
                 providerPromise, i, n;
 
             for (i = 0, n = providerIDs.length; i < n; ++i) {
-                providerPromise = this._providerWithModuleID(providerIDs[i], dataServiceInfo.require);
+                providerPromise = this._providerWithModuleID(providerIDs[i], dataService);
                 promises.push(providerPromise);
             }
 
@@ -146,23 +146,23 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _providerWithModuleID: {
-        value: function (moduleID, require) {
+        value: function (moduleID, dataService) {
             var existingService = this._providersByModuleID.get(moduleID);
             return existingService ? Promise.resolve(existingService) :
-                                     this._makeProviderWithModuleID(moduleID, require);
+                                     this._makeProviderWithModuleID(moduleID, dataService);
         }
     },
 
 
     _authorizationWithProvider: {
-        value: function (moduleID, require) {
+        value: function (moduleID, dataService) {
             var self = this,
                 provider;
-            return this._providerWithModuleID(moduleID, require).then(function (instance) {
+            return this._providerWithModuleID(moduleID, dataService).then(function (instance) {
                 provider = instance;
                 return provider.authorize();
             }).then(function (authorization) {
-                return authorization || self._authorizeProviderWithManagerPanel(provider);
+                return authorization || self._authorizeProviderWithManagerPanel(provider, dataService);
             }).then(function (result) {
                 return result;
             });
@@ -170,13 +170,13 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _authorizeProviderWithManagerPanel: {
-        value: function (provider) {
+        value: function (provider, dataService) {
             var self = this,
                 managerPanel;
             self._pendingServicesCount++;
             return this._managerPanel().then(function (authManagerPanel) {
                 managerPanel = authManagerPanel;
-                return self._panelForProvider(provider);
+                return self._panelForProvider(provider, dataService);
             }).then(function (panel) {
                 return managerPanel.authorizeWithPanel(panel);
             }).finally(function () {
@@ -186,9 +186,11 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _makeProviderWithModuleID: {
-        value: function (moduleID, require) {
-            var self = this;
-            return require.async(moduleID).then(function (exports) {
+        value: function (moduleID, dataService) {
+            var self = this,
+                dataServiceInfo = Montage.getInfoForObject(dataService);
+
+            return dataServiceInfo.require.async(moduleID).then(function (exports) {
                 var provider, i, providerName,
                     providerNames = Object.keys(exports);
                 for (i = 0; (providerName = providerNames[i]); ++i) {
@@ -297,11 +299,10 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     _authorizationsForDataService: {
         value: function (dataService, requestIfAbsent) {
             var promises = [],
-                dataServiceInfo = Montage.getInfoForObject(dataService),
                 promise, moduleID, i, n;
             for (i = 0, n = dataService.authorizationServices.length; i < n; i++) {
                 moduleID = dataService.authorizationServices[i];
-                promise = this._authorizationForServiceFromProvider(moduleID, dataServiceInfo.require, requestIfAbsent);
+                promise = this._authorizationForServiceFromProvider(moduleID, dataService, requestIfAbsent);
                 if (promise) {
                     this._addAuthPromiseToArray(promise, promises, dataService.identifier);
                 }
@@ -322,13 +323,13 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
     },
 
     _authorizationForServiceFromProvider: {
-        value: function (moduleID, require, requestIfAbsent) {
+        value: function (moduleID, dataService, requestIfAbsent) {
             var self = this, 
                 promise = null;
             if (this._authorizationsByProviderModuleID.has(moduleID)) {
                 promise = this._authorizationsByProviderModuleID.get(moduleID);
             } else if (requestIfAbsent) {
-                promise = this._authorizationWithProvider(moduleID, require);
+                promise = this._authorizationWithProvider(moduleID, dataService);
                 promise.catch(function () {
                     self._authorizationsByProviderModuleID.delete(moduleID);
                 });

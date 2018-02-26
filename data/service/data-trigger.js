@@ -343,7 +343,6 @@ exports.DataTrigger.prototype = Object.create({}, /** @lends DataTrigger.prototy
             this._service.fetchObjectProperty(object, this._propertyName).then(function () {
                 return self._fulfillObjectPropertyFetch(object);
             }).catch(function (error) {
-                console.error(error);
                 return self._fulfillObjectPropertyFetch(object, error);
             });
         }

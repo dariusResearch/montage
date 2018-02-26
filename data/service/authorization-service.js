@@ -4,7 +4,7 @@ var DataService = require("data/service/data-service").DataService;
 /**
  *
  * @class
- * @extends RawDataService
+ * @extends DataService
  * @deprecated The Authorization API was moved to DataService itself.
  */
 exports.AuthorizationService = DataService.specialize( /** @lends AuthorizationService.prototype */ {

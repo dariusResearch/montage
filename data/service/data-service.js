@@ -1352,9 +1352,7 @@ exports.DataService = Montage.specialize(/** @lends DataService.prototype */ {
                     }
                 }
             }
-            // if (names.indexOf("geometryType")) {
-            //
-            // }
+
             // Return a promise that will be fulfilled only when all of the
             // requested data has been set on the object. If possible do this
             // without creating any additional promises.

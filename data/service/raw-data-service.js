@@ -212,23 +212,18 @@ exports.RawDataService = DataService.specialize(/** @lends RawDataService.protot
             } else {
                 if (this.authorizationPolicy === DataService.AuthorizationPolicy.ON_DEMAND) {
                     if (typeof this.shouldAuthorizeForQuery === "function" && this.shouldAuthorizeForQuery(stream.query) && !this.authorization) {
-                        this.authorizationPromise = exports.DataService.authorizationManager.authorizeService(this, true).then(function(authorization) {
+                        this.authorizationPromise = DataService.authorizationManager.authorizeService(this, true).then(function(authorization) {
                             self.authorization = authorization;
                             return authorization;
-                        }).catch(function(error) {
-                            console.log(error);
                         });
                     }
                 }
-                DataService.authorizationManager.authorizeService(this).then(function(authorization) {
-                    self.authorization = authorization;
-                    return authorization;
-                }).catch(function(error) {
-                    console.log(error);
-                }).then(function (authorization) {
+                this.authorizationPromise.then(function (authorization) {
                     stream.query = self.mapSelectorToRawDataQuery(query);
                     self.fetchRawData(stream);
                     stream.query = query;
+                }).catch(function(error) {
+                    stream.dataError(error);
                 });
             }
         }

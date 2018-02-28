@@ -178,6 +178,7 @@ var AuthorizationManager = Montage.specialize(/** @lends AuthorizationManager.pr
                 managerPanel = authManagerPanel;
                 return self._panelForProvider(provider, dataService);
             }).then(function (panel) {
+                self.callDelegateMethod("authorizationManagerWillAuthorizeServiceWithPanel", this, panel, provider, dataService);                
                 return managerPanel.authorizeWithPanel(panel);
             }).finally(function () {
                 self._pendingServicesCount--;

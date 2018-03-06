@@ -144,7 +144,7 @@ exports.RawPropertyValueToObjectConverter = Converter.specialize( /** @lends Raw
             return this._revertExpression;
         },
         set: function(value) {
-            if(value !== this._revertExpression) {
+            if (value !== this._revertExpression) {
                 this._revertExpression = value;
                 this._revertSyntax = undefined;
             }
@@ -162,7 +162,14 @@ exports.RawPropertyValueToObjectConverter = Converter.specialize( /** @lends Raw
      * */
     revertSyntax: {
         get: function() {
-            return this._revertSyntax || (this._revertSyntax = parse(this.revertExpression));
+            if (!this._revertSyntax) {
+                try {
+                    this._revertSyntax = parse(this.revertExpression);
+                } catch (e) {
+                    debugger;
+                }
+            }
+            return this._revertSyntax;
         }
     },
 

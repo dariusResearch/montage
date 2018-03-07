@@ -57,7 +57,7 @@ exports.MappingRule = Montage.specialize(/** @lends MappingRule.prototype */ {
      * @type {boolean}
      */
     isReverter: {
-        value: undefined
+        value: false
     },
 
 

@@ -2083,7 +2083,7 @@ exports.DataService = Montage.specialize(/** @lends DataService.prototype */ {
         value: function() {
             var self = this;
             return this.readOfflineOperations().then(function (operations) {
-                operations.sort(this._compareOfflineOperations);
+                operations.sort(self._compareOfflineOperations);
                 return self.performOfflineOperations(operations);
             }).catch(function (e) {
                 console.error(e);

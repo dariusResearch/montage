@@ -275,6 +275,16 @@ exports.DataTrigger.prototype = Object.create({}, /** @lends DataTrigger.prototy
         }
     },
 
+    __overwriteCacheOnUpdate: {
+        value: false
+    },
+
+    _overwriteCacheOnUpdate: {
+        writable: true,
+        configurable: true,
+        value: false
+    },
+
     /**
      * @todo Rename and document API and implementation.
      *
@@ -318,7 +328,7 @@ exports.DataTrigger.prototype = Object.create({}, /** @lends DataTrigger.prototy
         value: function (object) {
             var self = this,
                 status = this._getValueStatus(object) || {};
-            if (!status.promise) {
+            if (this._overwriteCacheOnUpdate || !status.promise) {
                 this._setValueStatus(object, status);
                 status.promise = new Promise(function (resolve, reject) {
                     status.resolve = resolve;
@@ -326,6 +336,7 @@ exports.DataTrigger.prototype = Object.create({}, /** @lends DataTrigger.prototy
                     self._fetchObjectProperty(object);
                 });
             }
+
             // Return the existing or just created promise for this data.
             return status.promise;
         }
@@ -501,6 +512,7 @@ Object.defineProperties(exports.DataTrigger, /** @lends DataTrigger */ {
                 trigger._objectPrototype = prototype;
                 trigger._propertyName = name;
                 trigger._isGlobal = descriptor.isGlobal;
+                trigger._overwriteCacheOnUpdate = descriptor.isDerived;
                 if (descriptor.definition) {
                     Montage.defineProperty(prototype, name, {
                         get: function () {
@@ -527,11 +539,6 @@ Object.defineProperties(exports.DataTrigger, /** @lends DataTrigger */ {
                         }
                     });
                 }
-                    trigger = Object.create(this._getTriggerPrototype(service));
-                    trigger._objectPrototype = prototype;
-                    trigger._propertyName = name;
-                    trigger._isGlobal = descriptor.isGlobal;
-
             }
             return trigger;
         }
